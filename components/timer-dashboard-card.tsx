@@ -179,6 +179,21 @@ export default function TimerDashboardCard({
           }}
         />
       </div>
+
+      <div className="mt-4 flex items-center justify-center gap-2 relative z-10">
+        <span className="text-xs tracking-widest text-white/50 uppercase font-medium">Powered by</span>
+        <div className="flex items-center gap-4">
+          <div className="h-8 w-12 bg-white/10 rounded-md flex items-center justify-center backdrop-blur-sm border border-white/10 hover:bg-white/15 transition-all">
+            <img src="/logos/talentcity.png" alt="TalentCity Logo" className="h-5 w-auto object-contain" />
+          </div>
+          <div className="h-8 w-12 bg-white/10 rounded-md flex items-center justify-center backdrop-blur-sm border border-white/10 hover:bg-white/15 transition-all">
+            <img src="/logos/fmtglobal.png" alt="FMT Global Logo" className="h-5 w-auto object-contain" />
+          </div>
+          <div className="h-8 w-12 bg-white/10 rounded-md flex items-center justify-center backdrop-blur-sm border border-white/10 hover:bg-white/15 transition-all">
+            <img src="/logos/ey.png" alt="EY Logo" className="h-5 w-auto object-contain" />
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
