@@ -183,14 +183,14 @@ export default function TimerDashboardCard({
       <div className="mt-4 flex items-center justify-center gap-2 relative z-10">
         <span className="text-xs tracking-widest text-white/50 uppercase font-medium">Powered by</span>
         <div className="flex items-center gap-4">
-          <div className="h-8 w-12 bg-white/10 rounded-md flex items-center justify-center backdrop-blur-sm border border-white/10 hover:bg-white/15 transition-all">
-            <img src="/logos/talentcity.png" alt="TalentCity Logo" className="h-5 w-auto object-contain" />
+          <div className="bg-white/10 rounded-md flex items-center justify-center backdrop-blur-sm border border-white/10 hover:bg-white/15 transition-all w-[90px] h-[30px]">
+            <img src="/logos/talentcity.png" alt="TalentCity Logo" className="object-contain w-[90px] h-[50px]" />
           </div>
-          <div className="h-8 w-12 bg-white/10 rounded-md flex items-center justify-center backdrop-blur-sm border border-white/10 hover:bg-white/15 transition-all">
-            <img src="/logos/fmtglobal.png" alt="FMT Global Logo" className="h-5 w-auto object-contain" />
+          <div className="bg-white/10 rounded-md flex items-center justify-center backdrop-blur-sm border border-white/10 hover:bg-white/15 transition-all w-[90px] h-[35px]">
+            <img src="/logos/fmtglobal.png" alt="FMT Global Logo" className="object-contain w-[50px] h-[33px]" />
           </div>
-          <div className="h-8 w-12 bg-white/10 rounded-md flex items-center justify-center backdrop-blur-sm border border-white/10 hover:bg-white/15 transition-all">
-            <img src="/logos/ey.png" alt="EY Logo" className="h-5 w-auto object-contain" />
+          <div className="bg-white/10 rounded-md flex items-center justify-center backdrop-blur-sm border border-white/10 hover:bg-white/15 transition-all w-[90px] h-[45px]">
+            <img src="/logos/ey.png" alt="EY Logo" className="object-contain w-[90px] h-10" />
           </div>
         </div>
       </div>
