@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import { getStoredEndTime, setStoredEndTime, clearStoredEndTime } from "@/lib/countdown-store"
+import { saveTimerState, getTimerState, clearTimerState } from "@/lib/supabase/db"
 
 export interface CountdownState {
   hours: number
@@ -21,6 +22,7 @@ export function useCountdown() {
   })
   const [minutePulse, setMinutePulse] = useState(false)
   const lastMinuteRef = useRef<number | null>(null)
+  const dbSyncInProgressRef = useRef(false)
 
   const calculateTimeRemaining = useCallback((endTime: number) => {
     const now = Date.now()
@@ -33,6 +35,33 @@ export function useCountdown() {
 
     return { hours, minutes, seconds, remaining }
   }, [])
+
+  const syncFromDatabase = useCallback(async () => {
+    try {
+      const dbState = await getTimerState()
+      if (dbState) {
+        const { end_time, is_paused, paused_remaining } = dbState
+
+        if (is_paused && paused_remaining !== null) {
+          // Restore paused state
+          setStoredEndTime(-paused_remaining)
+          setState({ hours: 0, minutes: 0, seconds: 0, isRunning: false, isFinished: false })
+        } else {
+          // Restore running state
+          const { hours, minutes, seconds, remaining } = calculateTimeRemaining(end_time)
+          setStoredEndTime(end_time)
+
+          if (remaining <= 0) {
+            setState({ hours: 0, minutes: 0, seconds: 0, isRunning: false, isFinished: true })
+          } else {
+            setState({ hours, minutes, seconds, isRunning: true, isFinished: false })
+          }
+        }
+      }
+    } catch (error) {
+      console.error("[Timer] Database sync error:", error)
+    }
+  }, [calculateTimeRemaining])
 
   const syncFromStorage = useCallback(() => {
     const endTime = getStoredEndTime()
@@ -47,6 +76,7 @@ export function useCountdown() {
   }, [calculateTimeRemaining])
 
   useEffect(() => {
+    syncFromDatabase()
     syncFromStorage()
 
     const handleStorage = (e: StorageEvent) => {
@@ -56,7 +86,7 @@ export function useCountdown() {
     }
     window.addEventListener("storage", handleStorage)
     return () => window.removeEventListener("storage", handleStorage)
-  }, [syncFromStorage])
+  }, [syncFromDatabase, syncFromStorage])
 
   useEffect(() => {
     if (!state.isRunning || state.isFinished) return
@@ -83,7 +113,7 @@ export function useCountdown() {
       } else {
         setState({ hours, minutes, seconds, isRunning: true, isFinished: false })
       }
-    }, 100) // Update frequently for accurate sync
+    }, 100)
 
     return () => clearInterval(interval)
   }, [state.isRunning, state.isFinished, calculateTimeRemaining])
@@ -95,6 +125,13 @@ export function useCountdown() {
       const { hours, minutes, seconds } = calculateTimeRemaining(endTime)
       lastMinuteRef.current = minutes
       setState({ hours, minutes, seconds, isRunning: true, isFinished: false })
+
+      if (!dbSyncInProgressRef.current) {
+        dbSyncInProgressRef.current = true
+        saveTimerState(endTime, false, null).finally(() => {
+          dbSyncInProgressRef.current = false
+        })
+      }
     },
     [calculateTimeRemaining],
   )
@@ -105,6 +142,13 @@ export function useCountdown() {
       const remaining = Math.max(0, endTime - Date.now())
       // Store remaining time as negative to indicate paused state
       setStoredEndTime(-remaining)
+
+      if (!dbSyncInProgressRef.current) {
+        dbSyncInProgressRef.current = true
+        saveTimerState(-remaining, true, remaining).finally(() => {
+          dbSyncInProgressRef.current = false
+        })
+      }
     }
     setState((prev) => ({ ...prev, isRunning: false }))
   }, [])
@@ -116,6 +160,14 @@ export function useCountdown() {
       const remaining = -stored
       const newEndTime = Date.now() + remaining
       setStoredEndTime(newEndTime)
+
+      if (!dbSyncInProgressRef.current) {
+        dbSyncInProgressRef.current = true
+        saveTimerState(newEndTime, false, null).finally(() => {
+          dbSyncInProgressRef.current = false
+        })
+      }
+
       setState((prev) => ({ ...prev, isRunning: true }))
     }
   }, [])
@@ -124,6 +176,13 @@ export function useCountdown() {
     clearStoredEndTime()
     lastMinuteRef.current = null
     setState({ hours: 24, minutes: 0, seconds: 0, isRunning: false, isFinished: false })
+
+    if (!dbSyncInProgressRef.current) {
+      dbSyncInProgressRef.current = true
+      clearTimerState().finally(() => {
+        dbSyncInProgressRef.current = false
+      })
+    }
   }, [])
 
   return { ...state, minutePulse, start, pause, resume, reset }

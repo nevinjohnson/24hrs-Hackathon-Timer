@@ -1,7 +1,7 @@
 "use client"
 
 import { cn } from "@/lib/utils"
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 
 interface TimerDashboardCardProps {
   hours: number
@@ -10,6 +10,7 @@ interface TimerDashboardCardProps {
   isRunning: boolean
   isFinished: boolean
   minutePulse: boolean
+  onUnlock?: () => void
 }
 
 export default function TimerDashboardCard({
@@ -19,8 +20,12 @@ export default function TimerDashboardCard({
   isRunning,
   isFinished,
   minutePulse,
+  onUnlock,
 }: TimerDashboardCardProps) {
   const formatNumber = (n: number) => n.toString().padStart(2, "0")
+
+  const [tapCount, setTapCount] = useState(0)
+  const tapTimeoutRef = useRef<NodeJS.Timeout>()
 
   const tickAudioRef = useRef<HTMLAudioElement | null>(null)
   const finishAudioRef = useRef<HTMLAudioElement | null>(null)
@@ -82,9 +87,28 @@ export default function TimerDashboardCard({
     prevHoursRef.current = hours
   }, [hours, isRunning])
 
+  const handleTimerTap = () => {
+    const newTapCount = tapCount + 1
+    setTapCount(newTapCount)
+
+    clearTimeout(tapTimeoutRef.current)
+
+    if (newTapCount === 5) {
+      setTapCount(0)
+      onUnlock?.()
+    } else {
+      tapTimeoutRef.current = setTimeout(() => {
+        setTapCount(0)
+      }, 1000)
+    }
+  }
+
   if (isFinished) {
     return (
-      <div className="relative overflow-hidden rounded-3xl p-8 md:p-12 shadow-2xl border border-white/10 bg-white/5 backdrop-blur-md">
+      <div
+        className="relative overflow-hidden rounded-3xl p-8 md:p-12 shadow-2xl border border-white/10 bg-white/5 backdrop-blur-md cursor-pointer"
+        onClick={handleTimerTap}
+      >
         <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-transparent to-teal-500/5" />
 
         <div className="text-center relative z-10">
@@ -101,11 +125,28 @@ export default function TimerDashboardCard({
   }
 
   return (
-    <div className="relative overflow-hidden rounded-3xl p-8 md:p-12 shadow-2xl border border-white/10 bg-white/5 backdrop-blur-md">
+    <div
+      className="relative overflow-hidden rounded-3xl p-8 md:p-12 shadow-2xl border border-white/10 bg-white/5 backdrop-blur-md cursor-pointer transition-all hover:border-white/20"
+      onClick={handleTimerTap}
+    >
       <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-white/5 opacity-50 bg-transparent" />
 
       <div className="absolute -top-32 -left-32 w-64 h-64 bg-cyan-400/5 rounded-full blur-3xl animate-blob" />
       <div className="absolute -bottom-32 -right-32 w-64 h-64 bg-teal-400/5 rounded-full blur-3xl animate-blob delay-2000" />
+
+      {tapCount > 0 && (
+        <div className="absolute top-4 right-4 z-20 flex items-center gap-1">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div
+              key={i}
+              className={cn(
+                "w-2 h-2 rounded-full transition-all",
+                i < tapCount ? "bg-cyan-400 shadow-lg shadow-cyan-400/50" : "bg-white/20",
+              )}
+            />
+          ))}
+        </div>
+      )}
 
       <div className="flex items-center justify-between mb-8 relative z-10">
         <div className="flex items-center gap-2">
